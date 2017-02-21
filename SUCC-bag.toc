@@ -1,0 +1,6 @@
+## Interface: 11200
+## Author: checkem
+## Title: SUCC-bag
+## Notes: Why sip if you can S U C C?(Yes! A bag addon.)
+
+SUCC-bag.lua
