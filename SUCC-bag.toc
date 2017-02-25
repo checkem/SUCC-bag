@@ -1,6 +1,8 @@
 ## Interface: 11200
+## Version: 1.0
 ## Author: checkem
 ## Title: SUCC-bag
-## Notes: Why sip if you can S U C C?(Yes! A bag addon.)
+## Notes: Why sip if you can |cFFF6A3EFS U C C|cFFFFFFFF?|n(Yes! A bag addon.)
+## OptionalDeps: Clean Up
 
 SUCC-bag.lua
