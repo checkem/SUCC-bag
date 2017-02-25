@@ -439,7 +439,7 @@ tinsert(UISpecialFrames, 'SUCC_bag')
 SUCC_bag:SetScript('OnMouseDown', function() this:StartMoving() end)
 SUCC_bag:SetScript('OnMouseUp', function() this:StopMovingOrSizing() end)
 SUCC_bag:SetScript('OnShow', function() PlaySound('igBackPackOpen') end)
-SUCC_bag:SetScript('OnHide', function() PlaySound('igBackPackClose') end)
+SUCC_bag:SetScript('OnHide', function() PlaySound('igBackPackClose') SUCC_bag.bagFrame:Hide() end)
 SUCC_bag.bags = {0, 1, 2, 3, 4}
 SUCC_bag.cols = bagCols
 
@@ -610,8 +610,9 @@ SUCC_bag.bank:SetScript('OnShow', function()
 	PlaySound('KeyRingClose')
 end)
 SUCC_bag.bank:SetScript('OnHide', function()
-	CloseBankFrame();
-	PlaySound("igMainMenuClose");
+	CloseBankFrame()
+	SUCC_bag.bank.bagFrame:Hide()
+	PlaySound("igMainMenuClose")
 end)
 SUCC_bag.bank.bags = {-1}
 SUCC_bag.bank.cols = 6
