@@ -94,7 +94,7 @@ local function ItemUpdateBorder(button, option)
 		local q
 		if link then
 			local _, _, istring         = string.find(link, '|H(.+)|h')
-			_, _, q, _, _, type   = GetItemInfo(istring)
+			local _, _, q, _, _, type   = GetItemInfo(istring)
 		end
 		if q and q > 1 then
 			button:GetNormalTexture():SetVertexColor(GetItemQualityColor(q))
