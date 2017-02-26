@@ -6,21 +6,21 @@ local function print(mes)
 end
 
 local function SetMoneyFrameColor(frameName, r, g, b)
-	local goldButton = getglobal(frameName.."GoldButton");
-	local silverButton = getglobal(frameName.."SilverButton");
-	local copperButton = getglobal(frameName.."CopperButton");
+	local goldButton = getglobal(frameName..'GoldButton')
+	local silverButton = getglobal(frameName..'SilverButton')
+	local copperButton = getglobal(frameName..'CopperButton')
 
-	goldButton:SetTextColor(r, g, b);
-	silverButton:SetTextColor(r, g, b);
-	copperButton:SetTextColor(r, g, b);
+	goldButton:SetTextColor(r, g, b)
+	silverButton:SetTextColor(r, g, b)
+	copperButton:SetTextColor(r, g, b)
 end
 
 local function BagType (bagID)
 	if( bagID <= 0 ) then return nil end
-	local id;
-	local link = GetInventoryItemLink("player", ContainerIDToInventoryID(bagID) )
+	local id
+	local link = GetInventoryItemLink('player', ContainerIDToInventoryID(bagID) )
 	if(link) then
-		_, _, id = string.find(link, "item:(%d+)")
+		_, _, id = string.find(link, 'item:(%d+)')
 	end
 	if(id) then
 		local _, _, _, _, itemType, subType = GetItemInfo(id)
@@ -38,15 +38,16 @@ end
 local function BankUpdateBagSlotStatus()
 	local slots,full = GetNumBankSlots()
 	for i=1, NUM_BANKBAGSLOTS, 1 do
-		local button = getglobal("SUCC_bagBBag"..i);
-		local tooltipText;
+		local button = getglobal('SUCC_bagBBag'..i)
+		local tooltipText
 		if ( button ) then
 			if ( i <= slots ) then
-				SetItemButtonTextureVertexColor(button, 1.0,1.0,1.0);
-				button.tooltipText = BANK_BAG;
+				SetItemButtonTextureVertexColor(button, 1.0,1.0,1.0)
+				button.tooltipText = BANK_BAG
+				button.buy = nil
 			else
-				SetItemButtonTextureVertexColor(button, 1.0,0.1,0.1);
-				button.tooltipText = BANK_BAG_PURCHASE;
+				SetItemButtonTextureVertexColor(button, 1.0,0.1,0.1)
+				button.tooltipText = BANK_BAG_PURCHASE
 				button.buy = 1
 			end
 		end
@@ -58,9 +59,9 @@ local function BankUpdateBagSlotStatus()
 	local cost = GetBankSlotCost(numSlots)
 	SUCC_bag.bank.nextSlotCost = cost
 	if( GetMoney() >= cost ) then
-		SetMoneyFrameColor("SUCC_bagBDetailMoneyFrame", 1.0, 1.0, 1.0);
+		SetMoneyFrameColor('SUCC_bagBDetailMoneyFrame', 1.0, 1.0, 1.0)
 	else
-		SetMoneyFrameColor("SUCC_bagBDetailMoneyFrame", 1.0, 0.1, 0.1)
+		SetMoneyFrameColor('SUCC_bagBDetailMoneyFrame', 1.0, 0.1, 0.1)
 	end
 	MoneyFrame_Update('SUCC_bagBDetailMoneyFrame', cost)
 end
@@ -68,20 +69,20 @@ end
 local function ItemCreate(name, parent)
 	local button
 	if parent:GetID() == -1 then
-		button = CreateFrame("Button", name, parent, 'BankItemButtonGenericTemplate')
+		button = CreateFrame('Button', name, parent, 'BankItemButtonGenericTemplate')
 		CreateFrame('Model', name .. 'Cooldown', button, 'CooldownFrameTemplate')
 	else
-		button = CreateFrame("Button", name, parent, 'ContainerFrameItemButtonTemplate');
+		button = CreateFrame('Button', name, parent, 'ContainerFrameItemButtonTemplate')
 	end
 	button:SetNormalTexture('Interface\\AddOns\\SUCC-bag\\Textures\\Slot')
 	button.bg = button:CreateTexture(nil, 'BACKGROUND')
 	button.bg:SetTexture[[Interface\PaperDoll\UI-Backpack-EmptySlot]]
 	button.bg:SetAlpha(.75)
 	button.bg:SetAllPoints()
-	button:SetAlpha(parent:GetParent():GetAlpha());
-	button:RegisterForClicks("LeftButtonUp", "RightButtonUp");
-	button:RegisterForDrag("LeftButton");
-	return button;
+	button:SetAlpha(parent:GetParent():GetAlpha())
+	button:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
+	button:RegisterForDrag('LeftButton')
+	return button
 end
 
 local function ItemUpdateBorder(button, option)
@@ -90,20 +91,19 @@ local function ItemUpdateBorder(button, option)
 		button:GetNormalTexture():SetVertexColor(1, 0, 0)
 	elseif not button:GetParent().colorLocked then
 		local bagID = button:GetParent():GetID()
-		local link = GetContainerItemLink(bagID, button:GetID())
-		local q
+		local link, q = GetContainerItemLink(bagID, button:GetID()), nil
 		if link then
-			local _, _, istring         = string.find(link, '|H(.+)|h')
-			local _, _, q, _, _, type   = GetItemInfo(istring)
+			local _, _, istring = string.find(link, '|H(.+)|h')
+			_, _, q = GetItemInfo(istring)
 		end
 		if q and q > 1 then
 			button:GetNormalTexture():SetVertexColor(GetItemQualityColor(q))
 		else
 			local bagType = BagType(bagID)
 			if bagType == 1 then
-				button:GetNormalTexture():SetVertexColor(1, 1, 0)
+				button:GetNormalTexture():SetVertexColor(0.8, 0.8, 0.3)
 			elseif bagType == 2 then
-				button:GetNormalTexture():SetVertexColor(0, 1, 0)
+				button:GetNormalTexture():SetVertexColor(0.3, 0.8, 0.3)
 			else
 				button:GetNormalTexture():SetVertexColor(0.3, 0.3, 0.3)
 			end
@@ -123,7 +123,7 @@ local function HighlightBagSlots(bagID, option)
 end
 
 local function ItemUpdateCooldown(container, button)
-	local cooldown = getglobal(button:GetName().."Cooldown")
+	local cooldown = getglobal(button:GetName()..'Cooldown')
 	local start, duration, enable = GetContainerItemCooldown( container, button:GetID() )
 	CooldownFrame_SetTimer(cooldown, start, duration, enable)
 	if ( duration > 0 and enable == 0 ) then
@@ -138,7 +138,7 @@ local function ItemUpdate(item)
 	if texture then
 		ItemUpdateCooldown(item:GetParent():GetID() , item)
 	else
-		getglobal(item:GetName() .. "Cooldown"):Hide()
+		getglobal(item:GetName() .. 'Cooldown'):Hide()
 	end
 	SetItemButtonDesaturated(item, locked, 0.5, 0.5, 0.5)
 	SetItemButtonTexture( item, texture )
@@ -148,7 +148,7 @@ end
 local dummyBag = {}
 
 local function CreateDummyBag(parent, bagID)
-	local dummyBag = CreateFrame("Frame", parent:GetName() .. "DummyBag" .. bagID, parent)
+	local dummyBag = CreateFrame('Frame', parent:GetName() .. 'DummyBag' .. bagID, parent)
 	dummyBag:SetID(bagID)
 	return dummyBag
 end
@@ -159,9 +159,9 @@ local function AddBag(frame, bagID)
 	end
 	
 	if dummyBag.removed == bagID then dummyBag.removed = nil return end
-	local frameName = frame:GetName();
-	local slot = frame.size;
-	local bagSize;
+	local frameName = frame:GetName()
+	local slot = frame.size
+	local bagSize
 
 	if(bagID == KEYRING_CONTAINER) then
 		bagSize = GetKeyRingSize()
@@ -170,46 +170,55 @@ local function AddBag(frame, bagID)
 	end
 	dummyBag[bagID].size = bagSize
 	for index = 1, bagSize, 1 do
-		slot = slot + 1;
-		local item = getglobal( frameName .. "Item".. slot) or ItemCreate(frameName .. "Item".. slot, dummyBag[bagID]);
-		item:SetID(index);
-		item:SetParent(dummyBag[bagID]);
-		item:Show();
-		ItemUpdate(item);
+		slot = slot + 1
+		local item = getglobal( frameName .. 'Item'.. slot) or ItemCreate(frameName .. 'Item'.. slot, dummyBag[bagID])
+		item:SetID(index)
+		item:SetParent(dummyBag[bagID])
+		item:Show()
+		ItemUpdate(item)
 		if frame == SUCC_bag.bank.bagFrame and SUCC_bag.bank.slot[bagID - 4]:GetChecked() then
 			HighlightBagSlots(bagID, 'highlight')
 		end
 	end
-	frame.size = frame.size + bagSize;
+	frame.size = frame.size + bagSize
 end
 
 local function FrameTrimToSize(frame)
 	if not frame.space then return end
 	local frameName = frame:GetName()
-	local slot, height
+	local slot, height, width
 	if frame.size then
 		local slot = frame.size + 1
-		local button = getglobal(frameName .. "Item".. slot)
+		local button = getglobal(frameName .. 'Item'.. slot)
 
 		while button do
 			button:Hide()
 			slot = slot + 1
-			button = getglobal(frameName .. "Item".. slot)
+			button = getglobal(frameName .. 'Item'.. slot)
 		end
 	end
 	if not frame.size or frame.size == 0 then
 		height = 64
-		frame:SetWidth(256)
+		width = 256
 	else
 		if frame.size < frame.cols then
-			frame:SetWidth((37 + frame.space) * frame.size + 14 - frame.space)
+			width = (37 + frame.space) * frame.size + 14 - frame.space
 		else
-			frame:SetWidth((37 + frame.space) * frame.cols + 14 - frame.space)
+			width = (37 + frame.space) * frame.cols + 14 - frame.space
 		end
-		height = (37 + frame.space) * math.ceil(frame.size / frame.cols)  + 32 - frame.space
-		if frameName == 'SUCC_bagBank' then height = height + 83 end
-		if frameName == 'SUCC_bagBankBagFrame' then height = (37 + frame.space) * 6 + 14 - frame.space end
+		if frameName == 'SUCC_bagBankBagFrame' then
+			height = (37 + frame.space) * 6 + 13 - frame.space
+			width = width + 5
+			frame.width = width
+		else
+			height = (37 + frame.space) * math.ceil(frame.size / frame.cols)  + 32 - frame.space
+		end
+		if frameName == 'SUCC_bagBank' then
+			height = height + 82
+			frame.width = width
+		end
 	end
+	frame:SetWidth(width)
 	frame:SetHeight(height)
 end
 
@@ -253,26 +262,26 @@ local function FrameLayout(frame, cols, space)
 	local index = 1
 	frame.cols = cols
 	frame.space = space
-	local button = getglobal(frameName .. "Item1")
+	local button = getglobal(frameName .. 'Item1')
 	if button then
 		button:ClearAllPoints()
 		if frameName == 'SUCC_bagBankBagFrame' then
-			button:SetPoint("TOPLEFT", frame, 8, -6)
+			button:SetPoint('TOPLEFT', frame, 14, -6)
 		else
-			button:SetPoint("TOPLEFT", frame, 9, -25)
+			button:SetPoint('TOPLEFT', frame, 9, -25)
 		end
 		for i = 1, rows, 1 do
 			for j = 1, cols, 1 do
 				index = index + 1
-				button = getglobal(frameName .. "Item" .. index)
+				button = getglobal(frameName .. 'Item' .. index)
 				if not button then break end
 				button:ClearAllPoints()
-				button:SetPoint("LEFT", frameName .. "Item" .. index - 1, "RIGHT", space, 0)
+				button:SetPoint('LEFT', frameName .. 'Item' .. index - 1, 'RIGHT', space, 0)
 			end
-			button = getglobal(frameName .. "Item" .. index)
+			button = getglobal(frameName .. 'Item' .. index)
 			if not button then break end
 			button:ClearAllPoints()
-			button:SetPoint("TOP", frameName .. "Item" .. index - cols, "BOTTOM", 0, -space)
+			button:SetPoint('TOP', frameName .. 'Item' .. index - cols, 'BOTTOM', 0, -space)
 		end
 	end
 	FrameTrimToSize(frame)
@@ -285,7 +294,7 @@ local function FrameGenerate(frame)
 	frame.size = 0
 	local frameName = frame:GetName()
 	if frame.moneyFrame then
-		MoneyFrame_Update(frameName .. "MoneyFrame", GetMoney())
+		MoneyFrame_Update(frameName .. 'MoneyFrame', GetMoney())
 	end
 
 	for _, bagID in pairs(frame.bags) do
@@ -334,7 +343,7 @@ local function FrameUpdate(frame, bagID)
 		end
 	end
 	for slot = startSlot, endSlot do
-		local item = getglobal(frameName .. "Item" .. slot)
+		local item = getglobal(frameName .. 'Item' .. slot)
 		if item then
 			ItemUpdate(item)
 		end
@@ -345,25 +354,25 @@ local function FrameUpdateLock(frame)
 	if not frame.size then return end
 	local frameName = frame:GetName()
 	for slot = 1, frame.size do
-		local item = getglobal(frameName .. "Item" .. slot)
+		local item = getglobal(frameName .. 'Item' .. slot)
 		local _, _, locked = GetContainerItemInfo(item:GetParent():GetID(), item:GetID())
 		SetItemButtonDesaturated(item, locked, 0.5, 0.5, 0.5)
 	end
 end
 
 local function Load(eventFrame)
-	eventFrame:RegisterEvent("BAG_CLOSED")
-	eventFrame:RegisterEvent("BAG_UPDATE")
-	eventFrame:RegisterEvent("ITEM_LOCK_CHANGED")
-	eventFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
-	eventFrame:RegisterEvent("CURSOR_UPDATE")
-	eventFrame:RegisterEvent("BANKFRAME_OPENED")
-	eventFrame:RegisterEvent("BANKFRAME_CLOSED")
-	eventFrame:RegisterEvent("PLAYERBANKBAGSLOTS_CHANGED")
+	eventFrame:RegisterEvent('BAG_CLOSED')
+	eventFrame:RegisterEvent('BAG_UPDATE')
+	eventFrame:RegisterEvent('ITEM_LOCK_CHANGED')
+	eventFrame:RegisterEvent('BAG_UPDATE_COOLDOWN')
+	eventFrame:RegisterEvent('CURSOR_UPDATE')
+	eventFrame:RegisterEvent('BANKFRAME_OPENED')
+	eventFrame:RegisterEvent('BANKFRAME_CLOSED')
+	eventFrame:RegisterEvent('PLAYERBANKBAGSLOTS_CHANGED')
 end
 
 local function OnEvent()
-	if event == "BAG_UPDATE" or event == "BAG_UPDATE_COOLDOWN" then
+	if event == 'BAG_UPDATE' or event == 'BAG_UPDATE_COOLDOWN' then
 		if dummyBag[arg1] then
 			FrameUpdate(dummyBag[arg1]:GetParent(), arg1)
 		end
@@ -377,7 +386,7 @@ local function OnEvent()
 		elseif this:IsVisible() then
 			RemoveBag(this, arg1)
 		end
-	elseif event == "ITEM_LOCK_CHANGED" then
+	elseif event == 'ITEM_LOCK_CHANGED' then
 		if this:IsVisible() then
 			FrameUpdateLock(this)
 		end
@@ -385,20 +394,20 @@ local function OnEvent()
 		OpenBag()
 		FrameOpen(SUCC_bag.bank)
 		BankUpdateBagSlotStatus()
-		this:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
-		this:RegisterEvent("PLAYER_MONEY")
+		this:RegisterEvent('PLAYERBANKSLOTS_CHANGED')
+		this:RegisterEvent('PLAYER_MONEY')
 	elseif event == 'BANKFRAME_CLOSED' then
 		CloseBag()
 		FrameClose(SUCC_bag.bank)
-		this:UnregisterEvent("PLAYERBANKSLOTS_CHANGED")
-		this:UnregisterEvent("PLAYER_MONEY")
+		this:UnregisterEvent('PLAYERBANKSLOTS_CHANGED')
+		this:UnregisterEvent('PLAYER_MONEY')
 	elseif event == 'PLAYERBANKSLOTS_CHANGED' then
 		FrameUpdate(SUCC_bag.bank, -1)
-	elseif ( event == "PLAYER_MONEY" or event == "PLAYERBANKBAGSLOTS_CHANGED" ) then
+	elseif ( event == 'PLAYER_MONEY' or event == 'PLAYERBANKBAGSLOTS_CHANGED' ) then
 		BankUpdateBagSlotStatus()
-	elseif event == "ADDON_LOADED" and arg1 == "SUCC-bag" then
-		this:UnregisterEvent("ADDON_LOADED")
-		BankFrame:UnregisterEvent("BANKFRAME_OPENED")
+	elseif event == 'ADDON_LOADED' and arg1 == 'SUCC-bag' then
+		this:UnregisterEvent('ADDON_LOADED')
+		BankFrame:UnregisterEvent('BANKFRAME_OPENED')
 		Load(this)
 	end
 end
@@ -426,8 +435,8 @@ end
 
 SUCC_bag = CreateFrame('Frame', 'SUCC_bag', UIParent)
 SUCC_bag:Hide()
-SUCC_bag:RegisterEvent("ADDON_LOADED")
-SUCC_bag:SetScript("OnEvent", OnEvent)
+SUCC_bag:RegisterEvent('ADDON_LOADED')
+SUCC_bag:SetScript('OnEvent', OnEvent)
 SUCC_bag:SetFrameStrata('MEDIUM')
 SUCC_bag:SetToplevel(true)
 SUCC_bag:EnableMouse()
@@ -510,17 +519,17 @@ SUCC_bag.toggleButton:SetWidth(16)
 SUCC_bag.toggleButton:SetPoint('TOPLEFT', 8, -4)
 SUCC_bag.toggleButton:SetNormalTexture('Interface\\GroupFrame\\UI-Group-MasterLooter')
 SUCC_bag.toggleButton:SetHighlightTexture('Interface\\GroupFrame\\UI-Group-MasterLooter')
-SUCC_bag.toggleButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+SUCC_bag.toggleButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 SUCC_bag.toggleButton:SetScript('OnClick', function()
 	local bagFrame = SUCC_bag.bagFrame
 	if arg1 == 'RightButton' then
 		ToggleKeyRing()
 	else
 		if bagFrame:IsVisible() then
-			SUCC_bag.toggleButton:GetNormalTexture():SetVertexColor(1, 1, 1);
+			SUCC_bag.toggleButton:GetNormalTexture():SetVertexColor(1, 1, 1)
 			bagFrame:Hide()
 		else
-			SUCC_bag.toggleButton:GetNormalTexture():SetVertexColor(1, 0, 0);
+			SUCC_bag.toggleButton:GetNormalTexture():SetVertexColor(1, 0, 0)
 			bagFrame:Show()
 		end
 	end
@@ -542,7 +551,7 @@ if Clean_Up then
 	SUCC_bag.cuBag:SetPoint('TOPLEFT', 25, -8)
 	SUCC_bag.cuBag:SetNormalTexture('Interface\\Buttons\\UI-SortArrow')
 	SUCC_bag.cuBag:SetHighlightTexture('Interface\\Buttons\\UI-SortArrow')
-	SUCC_bag.cuBag:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	SUCC_bag.cuBag:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 	SUCC_bag.cuBag:SetScript('OnClick', function()
 		local bagFrame = SUCC_bag.bagFrame
 		if arg1 == 'RightButton' then
@@ -606,13 +615,13 @@ SUCC_bag.bank:SetScript('OnMouseDown', function() this:StartMoving() end)
 SUCC_bag.bank:SetScript('OnMouseUp', function() this:StopMovingOrSizing() end)
 SUCC_bag.bank:SetScript('OnShow', function()
 	this:ClearAllPoints()
-	this:SetPoint('LEFT', UIParent, 'LEFT', 115, 0)
+	this:SetPoint('TOPLEFT', SUCC_bag, 'TOPRIGHT', 0, 0)
 	PlaySound('KeyRingClose')
 end)
 SUCC_bag.bank:SetScript('OnHide', function()
 	CloseBankFrame()
 	SUCC_bag.bank.bagFrame:Hide()
-	PlaySound("igMainMenuClose")
+	PlaySound('igMainMenuClose')
 end)
 SUCC_bag.bank.bags = {-1}
 SUCC_bag.bank.cols = 6
@@ -624,7 +633,7 @@ if Clean_Up then
 	SUCC_bag.bank.cuBag:SetPoint('TOPLEFT', 12, -8)
 	SUCC_bag.bank.cuBag:SetNormalTexture('Interface\\Buttons\\UI-SortArrow')
 	SUCC_bag.bank.cuBag:SetHighlightTexture('Interface\\Buttons\\UI-SortArrow')
-	SUCC_bag.bank.cuBag:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	SUCC_bag.bank.cuBag:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 	SUCC_bag.bank.cuBag:SetScript('OnClick', function()
 		local bagFrame = SUCC_bag.bagFrame
 		if arg1 == 'RightButton' then
@@ -653,26 +662,25 @@ SUCC_bag.bank.moneyFrame:SetWidth(206)
 SUCC_bag.bank.moneyFrame:SetPoint('RIGHT', SUCC_bag.bank.closeButton, 'LEFT', 12, 0)
 
 SUCC_bag.bank.bagFrame = CreateFrame('Frame', 'SUCC_bagBankBagFrame', SUCC_bag.bank)
-SUCC_bag.bank.bagFrame:SetFrameLevel(0)
-SUCC_bag.bank.bagFrame:SetPoint('TOPLEFT', SUCC_bag.bank, 'TOPRIGHT', -6, -19)
+SUCC_bag.bank.bagFrame:SetPoint('BOTTOMRIGHT', SUCC_bag.bank, 'BOTTOMRIGHT', 0, 0)
 local bbfBackdrop = {
-  bgFile = 'Interface\\AddOns\\SUCC-bag\\Textures\\marble',
   edgeFile = 'Interface\\AddOns\\SUCC-bag\\Textures\\BankBagFrame',
   tile = true,
   tileSize = 128,
   edgeSize = 32,
   insets = {
-	left = 0,
-	right = 5,
-	top = 5,
-	bottom = 5
+	left = 5,
+	right = 0,
+	top = 0,
+	bottom = 0
   }
 }
 SUCC_bag.bank.bagFrame:SetBackdrop(bbfBackdrop)
+SUCC_bag.bank.bagFrame:SetScript('OnShow', function() SUCC_bag.bank:SetWidth(SUCC_bag.bank.width + SUCC_bag.bank.bagFrame.width - 9) end)
+SUCC_bag.bank.bagFrame:SetScript('OnHide', function() SUCC_bag.bank:SetWidth(SUCC_bag.bank.width) end)
 SUCC_bag.bank.bagFrame:Hide()
 -- todo
 SUCC_bag.bank.bagFrame.bags = {5, 6, 7, 8, 9, 10}
-SUCC_bag.bank.bagFrame.cols = 6
 
 SUCC_bag.bank.slotTitle = SUCC_bag.bank:CreateFontString(nil, 'ARTWORK', 'GameFontNormal')
 SUCC_bag.bank.slotTitle:SetPoint('BOTTOMLEFT', SUCC_bag.bank, 'BOTTOMLEFT', 11, 55)
@@ -680,10 +688,10 @@ SUCC_bag.bank.slotTitle:SetJustifyH('LEFT')
 SUCC_bag.bank.slotTitle:SetText('Left Click: Toggle bags|nRight Click: Toggle highlight')
 
 SUCC_bag.bank.slotCost = CreateFrame('Frame', 'SUCC_bagBDetailMoneyFrame', SUCC_bag.bank, 'SmallMoneyFrameTemplate')
-SUCC_bag.bank.slotCost:SetPoint('BOTTOMRIGHT', SUCC_bag.bank, 'BOTTOMRIGHT', 4, 54)
+SUCC_bag.bank.slotCost:SetPoint('BOTTOMLEFT', SUCC_bag.bank, 'BOTTOMLEFT', 210, 54)
 SUCC_bag.bank.slotCost.info = {
 	UpdateFunc = function()
-		return SUCC_bag.bank.slotCost.staticMoney;
+		return SUCC_bag.bank.slotCost.staticMoney
 	end,
 	collapse = 1,
 }
@@ -694,15 +702,15 @@ getglobal('SUCC_bagBDetailMoneyFrameSilverButton'):EnableMouse(false)
 getglobal('SUCC_bagBDetailMoneyFrameCopperButton'):EnableMouse(false)
 MoneyFrame_Update('SUCC_bagBDetailMoneyFrame', SUCC_bag.bank.slotCost.info.UpdateFunc())
 
-StaticPopupDialogs["CONFIRM_BUY_SUCCBANK_SLOT"] = {
+StaticPopupDialogs['CONFIRM_BUY_SUCCBANK_SLOT'] = {
 	text = TEXT(CONFIRM_BUY_BANK_SLOT),
 	button1 = TEXT(YES),
 	button2 = TEXT(NO),
 	OnAccept = function()
-		PurchaseSlot();
+		PurchaseSlot()
 	end,
 	OnShow = function()
-		MoneyFrame_Update(this:GetName().."MoneyFrame", SUCC_bag.bank.nextSlotCost);
+		MoneyFrame_Update(this:GetName()..'MoneyFrame', SUCC_bag.bank.nextSlotCost)
 	end,
 	hasMoneyFrame = 1,
 	timeout = 0,
@@ -719,15 +727,15 @@ for i = 1, NUM_BANKBAGSLOTS, 1 do
 	SUCC_bag.bank.slot[i] = CreateFrame('CheckButton', 'SUCC_bagBBag' .. i, SUCC_bag.bank, 'BankItemButtonBagTemplate')
 	SUCC_bag.bank.slot[i]:SetID(i + 4)
 	SUCC_bag.bank.slot[i]:SetNormalTexture('Interface\\AddOns\\SUCC-bag\\Textures\\Slot')
-	SUCC_bag.bank.slot[i]:SetPoint('BOTTOMLEFT', SUCC_bag.bank, 'BOTTOMLEFT', (37 + bagSpacing) * (i - 1) + 9, 8)
+	SUCC_bag.bank.slot[i]:SetPoint('BOTTOMLEFT', SUCC_bag.bank, 'BOTTOMLEFT', (37 + bagSpacing) * (i - 1) + 9, 7)
 	SUCC_bag.bank.slot[i]:SetCheckedTexture('Interface\\Buttons\\CheckButtonHilight')
 	SUCC_bag.bank.slot[i].color = {math.random ( 0, 10 ) / 10, math.random ( 0, 10 ) / 10, math.random ( 0, 10 ) / 10}
 	SUCC_bag.bank.slot[i]:GetNormalTexture():SetVertexColor(SUCC_bag.bank.slot[i].color[1], SUCC_bag.bank.slot[i].color[2], SUCC_bag.bank.slot[i].color[3])
 	SUCC_bag.bank.slot[i]:SetScript('OnClick', function()
 		if this.buy then
 			this:SetChecked(not this:GetChecked())	-- slot name issue
-			PlaySound("igMainMenuOption")
-			StaticPopup_Show("CONFIRM_BUY_SUCCBANK_SLOT")
+			PlaySound('igMainMenuOption')
+			StaticPopup_Show('CONFIRM_BUY_SUCCBANK_SLOT')
 			return
 		end
 		if not CursorHasItem() then
@@ -739,13 +747,12 @@ for i = 1, NUM_BANKBAGSLOTS, 1 do
 				end
 			else
 				if ( IsShiftKeyDown() ) then
-					this:SetChecked(not this:GetChecked())	-- slot name issue
-					PickupBagFromSlot(this:GetInventorySlot());
+					PickupBagFromSlot(this:GetInventorySlot())
 				else
-					this:SetChecked(not this:GetChecked())
 					FrameToggle(SUCC_bag.bank.bagFrame)
-					PlaySound("BAGMENUBUTTONPRESS");
+					PlaySound('BAGMENUBUTTONPRESS')
 				end
+				this:SetChecked(not this:GetChecked())	-- slot name issue
 			end
 		else
 			this:SetChecked(not this:GetChecked())
@@ -757,8 +764,8 @@ for i = 1, NUM_BANKBAGSLOTS, 1 do
 	end)
 	SUCC_bag.bank.slot[i]:SetScript('OnEnter', function()
 		HighlightBagSlots(this:GetID(), 'highlight')
-		GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-		if ( not GameTooltip:SetInventoryItem("player", this:GetInventorySlot()) ) then
+		GameTooltip:SetOwner(this, 'ANCHOR_RIGHT')
+		if ( not GameTooltip:SetInventoryItem('player', this:GetInventorySlot()) ) then
 				GameTooltip:SetText(this.tooltipText)
 		end
 		CursorUpdate()
