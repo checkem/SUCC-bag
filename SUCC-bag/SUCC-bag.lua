@@ -86,27 +86,32 @@ local function ItemCreate(name, parent)
 end
 
 local function ItemUpdateBorder(button, option)
-	local color = {r = 1, g = 1, b = 1}
 	if option then
 		button:GetNormalTexture():SetVertexColor(1, 0, 0)
 	elseif not button:GetParent().colorLocked then
 		local bagID = button:GetParent():GetID()
-		local link, q = GetContainerItemLink(bagID, button:GetID()), nil
+		local link = GetContainerItemLink(bagID, button:GetID())
 		if link then
 			local _, _, istring = string.find(link, '|H(.+)|h')
-			_, _, q = GetItemInfo(istring)
-		end
-		if q and q > 1 then
-			button:GetNormalTexture():SetVertexColor(GetItemQualityColor(q))
-		else
-			local bagType = BagType(bagID)
-			if bagType == 1 then
-				button:GetNormalTexture():SetVertexColor(0.8, 0.8, 0.3)
-			elseif bagType == 2 then
-				button:GetNormalTexture():SetVertexColor(0.3, 0.8, 0.3)
-			else
-				button:GetNormalTexture():SetVertexColor(0.3, 0.3, 0.3)
+			local n, _, q, _, _, t = GetItemInfo(istring)
+			if string.find(n, 'Mark of Honor') then
+				button:GetNormalTexture():SetVertexColor(0.98, 0.95, 0)
+				return
+			elseif t == 'Quest' then
+				button:GetNormalTexture():SetVertexColor(0.96, 0.64, 0.94)
+				return
+			elseif q > 1 then
+				button:GetNormalTexture():SetVertexColor(GetItemQualityColor(q))
+				return
 			end
+		end
+		local bagType = BagType(bagID)
+		if bagType == 1 then
+			button:GetNormalTexture():SetVertexColor(0.8, 0.8, 0.3)
+		elseif bagType == 2 then
+			button:GetNormalTexture():SetVertexColor(0.3, 0.8, 0.3)
+		else
+			button:GetNormalTexture():SetVertexColor(0.3, 0.3, 0.3)
 		end
 	end
 end
