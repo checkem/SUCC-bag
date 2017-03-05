@@ -815,7 +815,7 @@ local function CreateMenuFrame()
 		return k
 	end
 
-	menu = CreateFrame('Frame', 'SUCC_bagOptions', UIParent)
+	menu = CreateFrame('Frame', 'SUCC_bagMenu', UIParent)
 	menu:SetWidth(270) menu:SetHeight(320)
 	menu:SetPoint('CENTER', UIParent)
 	menu:SetBackdrop(
@@ -834,7 +834,7 @@ local function CreateMenuFrame()
 	menu:SetScript('OnDragStart', function() menu:StartMoving() end)
 	menu:SetScript('OnDragStop', function() menu:StopMovingOrSizing() end)
 	menu:Hide()
-	tinsert(UISpecialFrames, 'SUCC_bagOptions')
+	tinsert(UISpecialFrames, 'SUCC_bagMenu')
 
 	menu.header = menu:CreateTexture(nil, 'ARTWORK')
 	menu.header:SetWidth(256) menu.header:SetHeight(64)
