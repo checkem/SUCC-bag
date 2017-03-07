@@ -13,16 +13,12 @@ function SUCC_bagDefaults()
 	SUCC_bagOptions.colors.bag['Soul Bag'] = {0.678, 0.549, 1}
 	SUCC_bagOptions.colors.bag['Herb Bag'] = {0.3, 0.8, 0.3}
 	SUCC_bagOptions.colors.bag['Enchanting Bag'] = {0.5, 0.4, 0.8}
+	SUCC_bagOptions.colors.override = false
 	SUCC_bagOptions.layout = {}
-	SUCC_bagOptions.layout.texture = 'Default'
 	SUCC_bagOptions.layout.spacing = 4
-	SUCC_bagOptions.layout.bag ={}
-	SUCC_bagOptions.layout.bag.columns = 8
-	SUCC_bagOptions.layout.bag.type = 1
-	SUCC_bagOptions.layout.bag.Keyring = 0
-	SUCC_bagOptions.layout.bank ={}
-	SUCC_bagOptions.layout.bank.columns = 8
-	SUCC_bagOptions.layout.bank.type = 1
+	SUCC_bagOptions.layout.columns ={}
+	SUCC_bagOptions.layout.columns.bag = 8
+	SUCC_bagOptions.layout.columns.bank = 8
 	SUCC_bagOptions.Clean_Up = 1
 	return SUCC_bagOptions
 end
@@ -30,6 +26,24 @@ end
 -- debug
 local function print(mes)
 	DEFAULT_CHAT_FRAME:AddMessage(mes)
+end
+
+local function	moneyToString(money)
+	local coins = {}
+	local wealth = GetMoney()
+	local string = ''
+	coins['|cFFFFFF00g|cFFFFFFFF '] = floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD))
+	coins['|cFFAAAAAAs|cFFFFFFFF '] = floor((money - (coins['|cFFFFFF00g|cFFFFFFFF '] * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER)
+	coins['|cFFEE9944c'] = mod(money, COPPER_PER_SILVER)
+	for k, i in pairs(coins) do
+		if i > 0 then
+			if wealth < money then
+				i = '|cFFFF0000' .. i
+			end
+			string = string .. i .. k
+		end
+	end
+	return string
 end
 
 local function FrameTrimToSize(frame)
@@ -62,26 +76,19 @@ local function TitleLayout(frame)
 	if frame.cuBag and SUCC_bagOptions.Clean_Up == 1 then
 		frame.title:ClearAllPoints()
 		frame.title:SetPoint('LEFT', frame.cuBag, 'RIGHT', 3, 0)
-		if frame.layout == 1 then
-			frame.cuBag:SetPoint('LEFT', frame.toggleButton, 'RIGHT', 3, 0)
-		else
-			frame.cuBag:SetPoint('TOPLEFT', 10, -6)
-		end
+		frame.cuBag:SetPoint('LEFT', frame.toggleButton, 'RIGHT', 3, 0)
 		if not frame.cuBag:IsVisible() then frame.cuBag:Show() end
-	elseif frame.layout == 1 then
+	else
 		if frame.cuBag then frame.cuBag:Hide() end
 		frame.title:ClearAllPoints()
 		frame.title:SetPoint('LEFT', frame.toggleButton, 'RIGHT', 3, 0)
-	else
-		frame.toggleButton:Hide()
 	end
 end
 
 local function SlotFrameSetup(frame)
-	if frame.layout == 1 then
-		frame.slotFrame:SetFrameLevel(0)
-		frame.slotFrame:SetPoint('TOPRIGHT', frame, 'TOPLEFT', 8, -16)
-		frame.slotFrame:SetBackdrop({
+	frame.slotFrame:SetFrameLevel(0)
+	frame.slotFrame:SetPoint('TOPRIGHT', frame, 'TOPLEFT', 8, -16)
+	frame.slotFrame:SetBackdrop({
 		bgFile = 'Interface\\AddOns\\SUCC-bag\\Textures\\marble',
 		edgeFile = 'Interface\\AddOns\\SUCC-bag\\Textures\\BagSlotFrame',
 		tile = true,
@@ -93,24 +100,21 @@ local function SlotFrameSetup(frame)
 			top = 5,
 			bottom = 5
 		}
-		})
-		frame.slotFrame:SetBackdropBorderColor(unpack(SUCC_bagOptions.colors.border))
-		frame.slotFrame:SetBackdropColor(unpack(SUCC_bagOptions.colors.backdrop))
-		frame.slotFrame:Hide()
-	end
+	})
+	frame.slotFrame:SetBackdropBorderColor(unpack(SUCC_bagOptions.colors.border))
+	frame.slotFrame:SetBackdropColor(unpack(SUCC_bagOptions.colors.backdrop))
+	frame.slotFrame:Hide()
 end
 
-local function FrameLayout(frame)
+local function FrameLayout(frame, cols)
 	if not frame.size then return end
 	local frameName = frame:GetName()
-	if frame.slotCost then
-		cols = SUCC_bagOptions.layout.bank.columns or 6
-	else
-		cols = SUCC_bagOptions.layout.bag.columns or 6
+	if not cols then
+		cols = frame.cols or SUCC_bagOptions.layout.columns.bag or 8
 	end
+	frame.cols = cols
 	local space = SUCC_bagOptions.layout.spacing or 4
 	frame.space = space
-	frame.cols = cols
 	local rows = math.ceil(frame.size / cols)
 	local button = getglobal(frameName .. 'Item1')
 	if button then
@@ -131,7 +135,7 @@ local function FrameLayout(frame)
 			button:SetPoint('TOP', frameName .. 'Item' .. index - cols, 'BOTTOM', 0, -space)
 		end
 	end
-	if frame.slotFrame and frame.layout == 1 then
+	if frame.slotFrame then
 		local totalslots = table.getn(frame.slotFrame.slot)
 		local bagcols, slot = math.ceil(totalslots / rows), 2
 		frame.slotFrame.slot[1]:ClearAllPoints()
@@ -165,14 +169,13 @@ local function BagType (bagID)
 			local _, _, id = string.find(link, "item:(%d+)")
 			local _, _, _, _, itemType, subType = GetItemInfo(id)
 			if itemType == 'Quiver' then
-				return unpack(SUCC_bagOptions.colors.ammo)
+				return SUCC_bagOptions.colors.ammo
 			else
-				return unpack(SUCC_bagOptions.colors.bag[subType])
+				return SUCC_bagOptions.colors.bag[subType], subType == 'Bag'
 			end
 		end
-	else
-		return unpack(SUCC_bagOptions.colors.bag.Bag)
 	end
+	return SUCC_bagOptions.colors.bag.Bag, true
 end
 
 local function ItemUpdateBorder(button, option)
@@ -180,22 +183,25 @@ local function ItemUpdateBorder(button, option)
 		button:GetNormalTexture():SetVertexColor(unpack(SUCC_bagOptions.colors.highlight))
 	elseif not button:GetParent().colorLocked then
 		local bagID = button:GetParent():GetID()
-		local link = GetContainerItemLink(bagID, button:GetID())
-		if link then
-			local _, _, id = string.find(link, "item:(%d+)")
-			local n, _, q, _, _, t = GetItemInfo(id)
-			if string.find(n, 'Mark of Honor') then
-				button:GetNormalTexture():SetVertexColor(unpack(SUCC_bagOptions.colors.BG))
-				return
-			elseif t == 'Quest' then
-				button:GetNormalTexture():SetVertexColor(unpack(SUCC_bagOptions.colors.quest))
-				return
-			elseif q > 1 then
-				button:GetNormalTexture():SetVertexColor(GetItemQualityColor(q))
-				return
+		local v, c = BagType(bagID)
+		if c or SUCC_bagOptions.colors.override then
+			local link = GetContainerItemLink(bagID, button:GetID())
+			if link then
+				local _, _, id = string.find(link, "item:(%d+)")
+				local n, _, q, _, _, t = GetItemInfo(id)
+				if string.find(n, 'Mark of Honor') then
+					button:GetNormalTexture():SetVertexColor(unpack(SUCC_bagOptions.colors.BG))
+					return
+				elseif t == 'Quest' then
+					button:GetNormalTexture():SetVertexColor(unpack(SUCC_bagOptions.colors.quest))
+					return
+				elseif q > 1 then
+					button:GetNormalTexture():SetVertexColor(GetItemQualityColor(q))
+					return
+				end
 			end
 		end
-		button:GetNormalTexture():SetVertexColor(BagType(bagID))
+		button:GetNormalTexture():SetVertexColor(unpack(v))
 	end
 end
 
@@ -408,6 +414,7 @@ local function Essentials(frame)
 			if arg1 == 'RightButton' then
 				ToggleKeyRing()
 			else
+				PlaySound('igMainMenuOption')
 				if slotFrame:IsVisible() then
 					slotFrame:Hide()
 				else
@@ -461,38 +468,49 @@ local function BankUpdateBagSlotStatus()
 	for i=1, NUM_BANKBAGSLOTS, 1 do
 		local button = getglobal('SUCC_bagBBag'..i)
 		local tooltipText
-		if ( button ) then
+		if button then
 			if ( i <= slots ) then
 				SetItemButtonTextureVertexColor(button, 1.0,1.0,1.0)
 				button.tooltipText = BANK_BAG
-				button.buy = nil
+				button:SetScript('OnClick', function()
+					if not CursorHasItem() then
+						if ( IsShiftKeyDown() ) then
+							PickupBagFromSlot(this:GetInventorySlot())
+							this:SetChecked(not this:GetChecked())	-- slot name issue
+						else
+							if not this:GetChecked() then
+								HighlightBagSlots(this:GetID())
+							else
+								HighlightBagSlots(this:GetID(), 'highlight')
+							end
+							PlaySound('igMainMenuOptionFaerTab')
+						end
+					else
+						this:SetChecked(not this:GetChecked())
+						PutItemInBag(this:GetInventorySlot())
+					end
+				end)
 			else
 				SetItemButtonTextureVertexColor(button, 1.0,0.1,0.1)
-				button.tooltipText = BANK_BAG_PURCHASE
-				button.buy = 1
+				local cost = GetBankSlotCost(slots)
+				SUCC_bag.bank.nextSlotCost = cost
+				button.tooltipText = BANK_BAG_PURCHASE .. '|nCost: ' .. moneyToString(cost)
+				button:SetScript('OnClick', function()
+					this:SetChecked(not this:GetChecked())	-- slot name issue
+					PlaySound('igMainMenuOption')
+					StaticPopup_Show('CONFIRM_BUY_SUCCBANK_SLOT')
+				end)
 			end
 		end
 	end
-	if(full) then
-		SUCC_bag.bank.slotCost:Hide()
-		return
-	end
-	local cost = GetBankSlotCost(numSlots)
-	SUCC_bag.bank.nextSlotCost = cost
-	if( GetMoney() >= cost ) then
-		SetMoneyFrameColor('SUCC_bagBDetailMoneyFrame', 1.0, 1.0, 1.0)
-	else
-		SetMoneyFrameColor('SUCC_bagBDetailMoneyFrame', 1.0, 0.1, 0.1)
-	end
-	MoneyFrame_Update('SUCC_bagBDetailMoneyFrame', cost)
 end
 
 local function PrepareBank(frame)
 	if frame.bank then return frame.bank end
 	frame.bank = CreateFrame('Frame', 'SUCC_bagBank', UIParent)
 	frame.bank:SetPoint('TOPLEFT', 53, -116)
-	frame.bank.layout = SUCC_bagOptions.layout.bank.type
-	frame.bank.bags = frame.bank.layout == 1 and {-1, 5, 6, 7, 8, 9, 10} or {-1}
+	frame.bank.bags = {-1, 5, 6, 7, 8, 9, 10}
+	frame.bank.cols = SUCC_bagOptions.layout.columns.bank or 8
 	frame.bank.slotFrame = CreateFrame('Frame', 'SUCC_bagBankSlotFrame', frame.bank)
 	frame.bank.slotFrame.slot = {}
 	for i = 1, NUM_BANKBAGSLOTS, 1 do
@@ -500,30 +518,6 @@ local function PrepareBank(frame)
 		frame.bank.slotFrame.slot[i]:SetID(i + 4)
 		frame.bank.slotFrame.slot[i]:SetNormalTexture('Interface\\AddOns\\SUCC-bag\\Textures\\Slot')
 		frame.bank.slotFrame.slot[i]:SetCheckedTexture('Interface\\Buttons\\CheckButtonHilight')
-		frame.bank.slotFrame.slot[i]:SetScript('OnClick', function()
-			if this.buy then
-				this:SetChecked(not this:GetChecked())	-- slot name issue
-				PlaySound('igMainMenuOption')
-				StaticPopup_Show('CONFIRM_BUY_SUCCBANK_SLOT')
-				return
-			end
-			if not CursorHasItem() then
-				if ( IsShiftKeyDown() ) then
-					PickupBagFromSlot(this:GetInventorySlot())
-					this:SetChecked(not this:GetChecked())	-- slot name issue
-				else
-					if not this:GetChecked() then
-						HighlightBagSlots(this:GetID())
-					else
-						HighlightBagSlots(this:GetID(), 'highlight')
-					end
-					PlaySound('BAGMENUBUTTONPRESS')
-				end
-			else
-				this:SetChecked(not this:GetChecked())
-				PutItemInBag(this:GetInventorySlot())
-			end
-		end)
 		frame.bank.slotFrame.slot[i]:SetScript('OnReceiveDrag', function()
 			PutItemInBag(this:GetInventorySlot())
 		end)
@@ -543,19 +537,6 @@ local function PrepareBank(frame)
 			ResetCursor()
 		end)
 	end
-	frame.bank.slotCost = CreateFrame('Frame', 'SUCC_bagBDetailMoneyFrame', frame.bank.slotFrame, 'SmallMoneyFrameTemplate')
-	frame.bank.slotCost.info = {
-		UpdateFunc = function()
-			return frame.bank.slotCost.staticMoney
-		end,
-		collapse = 1,
-	}
-	frame.bank.slotCost.moneyType = 'STATIC'
-	frame.bank.slotCost.small = 1
-	getglobal('SUCC_bagBDetailMoneyFrameGoldButton'):EnableMouse(false)
-	getglobal('SUCC_bagBDetailMoneyFrameSilverButton'):EnableMouse(false)
-	getglobal('SUCC_bagBDetailMoneyFrameCopperButton'):EnableMouse(false)
-	MoneyFrame_Update('SUCC_bagBDetailMoneyFrame', frame.bank.slotCost.info.UpdateFunc())
 	StaticPopupDialogs['CONFIRM_BUY_SUCCBANK_SLOT'] = {
 		text = TEXT(CONFIRM_BUY_BANK_SLOT),
 		button1 = TEXT(YES),
@@ -601,6 +582,7 @@ local function OnEvent()
 		this:RegisterEvent('PLAYER_MONEY')
 		SBFrameOpen(this, 1)
 		SBFrameOpen(this.bank)
+		PlaySound('igMainMenuOpen')
 		BankUpdateBagSlotStatus()
 	elseif event == 'BANKFRAME_CLOSED' then
 		this:UnregisterEvent('PLAYERBANKSLOTS_CHANGED')
@@ -622,8 +604,7 @@ local function OnEvent()
 		this:RegisterEvent('CURSOR_UPDATE')
 		this:RegisterEvent('BANKFRAME_OPENED')
 		this:RegisterEvent('BANKFRAME_CLOSED')
-		this.layout = SUCC_bagOptions.layout.bag.type
-		this.bags = this.layout == 1 and {0, 1, 2, 3, 4} or {0}
+		this.bags = {0, 1, 2, 3, 4}
 		Essentials(this)
 		Essentials(this.keyring)
 		PrepareBank(this)
@@ -646,6 +627,12 @@ SUCC_bag = CreateFrame('Frame', 'SUCC_bag', UIParent)
 SUCC_bag:SetPoint('BOTTOMRIGHT', UIParent, -55, 55)
 SUCC_bag:RegisterEvent('ADDON_LOADED')
 SUCC_bag:SetScript('OnEvent', OnEvent)
+SUCC_bag:SetScript('OnShow', function()
+	PlaySound('igInventoryOepn')
+end)
+SUCC_bag:SetScript('OnHide', function()
+	PlaySound('igInventoryClose')
+end)
 SUCC_bag.slotFrame = CreateFrame('Frame', 'SUCC_bagSlotFrame', SUCC_bag)
 SUCC_bag.slotFrame.slot = {}
 for i = 1, NUM_BAG_SLOTS, 1 do
@@ -657,7 +644,7 @@ for i = 1, NUM_BAG_SLOTS, 1 do
 			if ( IsShiftKeyDown() ) then
 				BagSlotButton_OnDrag()
 			else
-				PlaySound('BAGMENUBUTTONPRESS')
+				PlaySound('igMainMenuOptionFaerTab')
 				if not this:GetChecked() then
 					HighlightBagSlots(bagID - 19)
 				else
@@ -694,6 +681,9 @@ SUCC_bag.keyring:SetScript('OnShow', function()
 		this:SetPoint('BOTTOMLEFT', SUCC_bag, 'TOPLEFT', 0, 0)
 	end
 	PlaySound('KeyRingOpen')
+end)
+SUCC_bag.keyring:SetScript('OnHide', function()
+	PlaySound('KeyRingClose')
 end)
 
 -- overrides
@@ -745,17 +735,10 @@ local function SlidersState(frame, disable)
 	end
 end
 
-local function SetLayout()
-	local l, n = this:GetValue(), this:GetName()
-	local typeString = string.sub(n, 1, -7)
-	SUCC_bagOptions.layout[typeString].type = l
-	SlidersState(menu[typeString].columns, l)
-end
-
 local function SetColumns()
 	local l, n = this:GetValue(), string.sub(this:GetName(), 5, -8)
-	SUCC_bagOptions.layout[n].columns = l
-	if n == 'bag' then FrameLayout(SUCC_bag) else FrameLayout(SUCC_bag.bank) end
+	SUCC_bagOptions.layout.columns[n] = l
+	if n == 'bag' then FrameLayout(SUCC_bag, l) else FrameLayout(SUCC_bag.bank, l) end
 end
 
 local function SetColor()
@@ -816,7 +799,7 @@ local function CreateMenuFrame()
 	end
 
 	menu = CreateFrame('Frame', 'SUCC_bagMenu', UIParent)
-	menu:SetWidth(270) menu:SetHeight(320)
+	menu:SetWidth(270) menu:SetHeight(300)
 	menu:SetPoint('CENTER', UIParent)
 	menu:SetBackdrop(
 		{
@@ -847,25 +830,12 @@ local function CreateMenuFrame()
 	menu.bag = {}
 	menu.bank = {}
 
-	menu.bag.layout = slider('SBC_bagLayout', {'Bag layout', 'SUCC', 'jnt'}, {0, 1}, {SUCC_bagOptions.layout.bag.type, 1})
-	menu.bag.layout:SetPoint('TOPLEFT', menu, 35, -45)
-	menu.bag.layout:SetScript('OnValueChanged', SetLayout)
-
-	menu.bank.layout = slider('SBC_bankLayout', {'Bank layout', 'SUCC', 'jnt'}, {0, 1}, {SUCC_bagOptions.layout.bank.type, 1}, menu.bag.layout)
-	menu.bank.layout:SetScript('OnValueChanged', SetLayout)
-
--- until next update
-	SlidersState(menu.bag.layout, 1)
-	SlidersState(menu.bank.layout, 1)
--- end
-
-	menu.bag.columns = slider('SBC_bagColumns', {'Bag Columns', '4', '32'}, {4, 32}, {SUCC_bagOptions.layout.bag.columns, 1}, menu.bag.layout, 1)
+	menu.bag.columns = slider('SBC_bagColumns', {'Bag Columns', '4', '32'}, {4, 32}, {SUCC_bagOptions.layout.columns.bag, 1})
+	menu.bag.columns:SetPoint('TOPLEFT', menu, 35, -45)
 	menu.bag.columns:SetScript('OnValueChanged', SetColumns)
-	-- SlidersState(menu.bag.columns, SUCC_bagOptions.layout.bag.type)
 
-	menu.bank.columns = slider('SBC_bankColumns', {'Bank Columns', '4', '32'}, {4, 32}, {SUCC_bagOptions.layout.bank.columns, 1}, menu.bag.columns)
+	menu.bank.columns = slider('SBC_bankColumns', {'Bank Columns', '4', '32'}, {4, 32}, {SUCC_bagOptions.layout.columns.bank, 1}, menu.bag.columns)
 	menu.bank.columns:SetScript('OnValueChanged', SetColumns)
-	-- SlidersState(menu.bank.columns, SUCC_bagOptions.layout.bank.type)
 
 	menu.spacing = slider('SBC_itemSpacing', {'Item spacing', '0', '20'}, {0, 20}, {SUCC_bagOptions.layout.spacing, 1}, menu.bag.columns, 1)
 	menu.spacing:SetScript('OnValueChanged', function()
@@ -919,9 +889,9 @@ local function CreateMenuFrame()
 		if SUCC_bag.bank:IsVisible() then FrameUpdate(SUCC_bag.bank) end
 	end
 
-	menu.ammo = color('SBC_ammoColor', 'Ammo bag', SUCC_bagOptions.colors.ammo, menu.highlight)
-	menu.ammo.func = function(r, g, b)
-		SUCC_bagOptions.colors.ammo = {r, g, b}
+	menu.bg = color('SBC_BGColor', 'BG marks', SUCC_bagOptions.colors.BG, menu.highlight)
+	menu.bg.func = function(r, g, b)
+		SUCC_bagOptions.colors.BG = {r, g, b}
 		if SUCC_bag:IsVisible() then FrameUpdate(SUCC_bag) end
 		if SUCC_bag.bank:IsVisible() then FrameUpdate(SUCC_bag.bank) end
 	end
@@ -947,18 +917,37 @@ local function CreateMenuFrame()
 		if SUCC_bag.bank:IsVisible() then FrameUpdate(SUCC_bag.bank) end
 	end
 
-	menu.bg = color('SBC_BGColor', 'BG marks', SUCC_bagOptions.colors.BG, menu.enchanting)
-	menu.bg.func = function(r, g, b)
-		SUCC_bagOptions.colors.BG = {r, g, b}
+	menu.ammo = color('SBC_ammoColor', 'Ammo bag', SUCC_bagOptions.colors.ammo, menu.enchanting)
+	menu.ammo.func = function(r, g, b)
+		SUCC_bagOptions.colors.ammo = {r, g, b}
 		if SUCC_bag:IsVisible() then FrameUpdate(SUCC_bag) end
 		if SUCC_bag.bank:IsVisible() then FrameUpdate(SUCC_bag.bank) end
 	end
+
+	menu.override = CreateFrame('CheckButton', 'SBC_ColorBagOverride', menu, 'UICheckButtonTemplate')
+	menu.override:SetHeight(25)
+	menu.override:SetWidth(25)
+	menu.override:SetPoint('TOPRIGHT', menu.ammo, 'BOTTOMRIGHT', 4, -10)
+	menu.override:SetChecked(SUCC_bagOptions.colors.override)
+	menu.override:SetScript('OnClick', function()
+		if this:GetChecked() == 1 then
+			SUCC_bagOptions.colors.override = true
+		else
+			SUCC_bagOptions.colors.override = false
+		end
+		if SUCC_bag:IsVisible() then FrameUpdate(SUCC_bag) end
+		if SUCC_bag.bank:IsVisible() then FrameUpdate(SUCC_bag.bank) end
+	end)
+	menu.override.t = menu.override:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
+	menu.override.t:SetPoint('RIGHT', menu.override, 'LEFT', 10, 0)
+	menu.override.t:SetWidth(200)
+	menu.override.t:SetText('Quality color above bag color:')
 
 	if Clean_Up then
 		menu.cleanup = CreateFrame('CheckButton', 'SBC_cleanUp', menu, 'UICheckButtonTemplate')
 		menu.cleanup:SetHeight(25)
 		menu.cleanup:SetWidth(25)
-		menu.cleanup:SetPoint('TOPRIGHT', menu.bank.columns, 'BOTTOMRIGHT', 0, -22)
+		menu.cleanup:SetPoint('TOPRIGHT', menu.bank.columns, 'BOTTOMRIGHT', 4, -21)
 		menu.cleanup:SetChecked(SUCC_bagOptions.Clean_Up)
 		menu.cleanup:SetScript('OnClick', function()
 			if this:GetChecked() == 1 then
@@ -972,14 +961,8 @@ local function CreateMenuFrame()
 		menu.cleanup.t = menu.cleanup:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
 		menu.cleanup.t:SetPoint('RIGHT', menu.cleanup, 'LEFT', 10, 0)
 		menu.cleanup.t:SetWidth(90)
-		menu.cleanup.t:SetText('Clean_Up button:')
+		menu.cleanup.t:SetText('Clean_Up:')
 	end
-
-	menu.close = CreateFrame('Button', nil, menu, 'UIPanelButtonTemplate')
-	menu.close:SetWidth(100) menu.close:SetHeight(25)
-	menu.close:SetText('Close')
-	menu.close:SetPoint('BOTTOMRIGHT', menu, -25, 20)
-	menu.close:SetScript('OnClick', function() menu:Hide() end)
 
 	menu.reset = CreateFrame('Button', nil, menu, 'UIPanelButtonTemplate')
 	menu.reset:SetWidth(100) menu.reset:SetHeight(25)
@@ -989,15 +972,19 @@ local function CreateMenuFrame()
 		SUCC_bagOptions = SUCC_bagDefaults()
 		menu.border.func(unpack(SUCC_bagOptions.colors.border))
 		menu.backdrop.func(unpack(SUCC_bagOptions.colors.backdrop))
-		menu.bag.layout:SetValue(SUCC_bagOptions.layout.bag.type)
-		menu.bank.layout:SetValue(SUCC_bagOptions.layout.bank.type)
-		menu.bag.columns:SetValue(SUCC_bagOptions.layout.bag.columns)
-		menu.bank.columns:SetValue(SUCC_bagOptions.layout.bank.columns)
+		menu.bag.columns:SetValue(SUCC_bagOptions.layout.columns.bag)
+		menu.bank.columns:SetValue(SUCC_bagOptions.layout.columns.bank)
 		menu.spacing:SetValue(SUCC_bagOptions.layout.spacing)
 		if SUCC_bag:IsVisible() then FrameGenerate(SUCC_bag) end
 		if SUCC_bag.bank:IsVisible() then FrameGenerate(SUCC_bag.bank) end
 		if SUCC_bag.keyring:IsVisible() then FrameGenerate(SUCC_bag.keyring) end
 	end)
+
+	menu.close = CreateFrame('Button', nil, menu, 'UIPanelButtonTemplate')
+	menu.close:SetWidth(100) menu.close:SetHeight(25)
+	menu.close:SetText('Close')
+	menu.close:SetPoint('BOTTOMRIGHT', menu, -25, 20)
+	menu.close:SetScript('OnClick', function() menu:Hide() end)
 end
 
 SlashCmdList['SUCC_BAG'] = function()
