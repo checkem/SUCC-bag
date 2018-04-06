@@ -189,13 +189,13 @@ local function ItemUpdateBorder(button, option)
 			if link then
 				local _, _, id = string.find(link, "item:(%d+)")
 				local n, _, q, _, _, t = GetItemInfo(id)
-				if string.find(n, 'Mark of Honor') then
+				if n ~= nil and string.find(n, 'Mark of Honor') then
 					button:GetNormalTexture():SetVertexColor(unpack(SUCC_bagOptions.colors.BG))
 					return
 				elseif t == 'Quest' then
 					button:GetNormalTexture():SetVertexColor(unpack(SUCC_bagOptions.colors.quest))
 					return
-				elseif q > 1 then
+				elseif q ~= nil and q > 1 then
 					button:GetNormalTexture():SetVertexColor(GetItemQualityColor(q))
 					return
 				end
